@@ -52,6 +52,9 @@ Route::get('/terms', 'frontend\FrontEndController@termsAndConditions')->name('te
 
 Route::get('/about', 'frontend\FrontEndController@about')->name('about');
 
+Route::get('/send_email', 'frontend\MailSentController@sendEmail')->name('send_email');
+Route::get('/send_email_check', 'frontend\MailSentController@sendEmailCheck')->name('send_email_check');
+
 Route::get('/search', 'frontend\FrontEndController@search')->name('home_search');
 
 Route::get('/searchhotels', 'frontend\FrontEndController@searchSubmit')->name('search_submit');
