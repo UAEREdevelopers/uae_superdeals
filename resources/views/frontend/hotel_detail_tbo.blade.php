@@ -1,0 +1,430 @@
+@extends('frontend.layouts.frontend')
+
+@section('styles')
+    <link rel="stylesheet" href="{{ asset('css/intlTelInput.css') }}">
+    <link rel="stylesheet" href="{{ asset('flaticons/font/flaticon.css') }}">
+@endsection
+
+@section('content')
+    <div id="page">
+        <!-- /header -->
+        @include('frontend.layouts.navbar')
+        <!-- /header -->
+
+        <main>
+            @php
+                $images = json_decode($hotel->images, true);
+            @endphp
+
+            <section class="hero_in hotels_detail" style="background-image: url({{ $images[0] }})">
+                <div class="wrapper">
+                    <div class="container">
+                        <h1 class="fadeInUp"><span></span>{{ $hotel->HotelName }}</h1>
+                    </div>
+
+                    <span class="magnific-gallery">
+                        <a href="{{ $images[0] }}" class="btn_photos" title="" data-effect="mfp-zoom-in">View
+                            photos</a>
+                        @foreach ($images as $image)
+                            <a href="{{ $image }}" title="" data-effect="mfp-zoom-in"></a>
+                        @endforeach
+                    </span>
+                </div>
+            </section>
+            <!--/hero_in-->
+
+            <div class="bg_color_1">
+                <nav class="secondary_nav sticky_horizontal">
+                    <div class="container">
+                        <ul class="clearfix">
+                            <li><a href="#description" class="active">Description</a></li>
+                            {{-- <li><a href="#reviews">Reviews</a></li>
+						<li><a href="#sidebar">Booking</a></li> --}}
+                        </ul>
+                    </div>
+                </nav>
+                <div class="container margin_60_35">
+                    <div class="row" id="row">
+                        <div class="col-lg-12 col-md-12">
+                            <section id="description">
+                                <h2></h2>
+                                <div class="row">
+                                    {{ $hotel->Description }}
+                                </div>
+                                <!-- /row -->
+                                <hr>
+                                @if ($result['status']['statusCode'] == 01)
+                                    <table class="table table-bordered table-responsive-md" style="white-space: nowrap">
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Room Type</th>
+                                                {{-- <th>Capacity</th> --}}
+                                                <th>Price</th>
+                                                <th>Details</th>
+                                                {{-- <th>Rooms</th> --}}
+                                                <th></th>
+
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+
+
+
+                                            @forelse($result['RoomDetails'] as $room)
+
+                                                <tr>
+                                                    <td><i class="flaticon flaticon-bed text-black text-4xl"
+                                                            style="color: black; font-size:40px;"></i></td>
+                                                    <td><span style="font-weight: 600">{{ $room['RoomTypeName'] }}</span>
+                                                        <p>{{ $room['Inclusion'] }}</p>
+
+                                                        <p><a href="#0" tabindex="{{ $loop->index }}" data-toggle="popover"
+                                                                data-trigger="focus"
+                                                                title="Free Cancellation till : {{ \Carbon\Carbon::parse($room['CancelPolicies']['LastCancellationDeadline'])->format('d-m-Y') }}"
+                                                                data-content="{{ $room['CancelPolicies']['DefaultPolicy'] }}">cancellation
+                                                                policy</a></p>
+
+
+
+
+                                                        {{-- <p><button class="btn" id="details_{{$loop->iteration}}" onclick="fetchdetails('{{$loop->iteration}}', '{{$hotel->HCode}}' , '{{$room['HKey']}}' , '{{$room['RateKey']}}')">View more Details
+										 <span class="loader_{{$loop->iteration}}" style="display: none"><div class="spinner-border spinner-border-sm" role="status">
+  <span class="sr-only">Loading...</span>
+</div></span></button></p> --}}
+
+                                                    </td>
+                                                    {{-- <td>2</td> --}}
+                                                    <td class="text-danger font-weight-bold ">
+                                                        {{ $currency ?? $room['RoomRate']['PrefCurrency'] }}
+                                                        {{ number_format(getAmountWithCommission($room['RoomRate']['PrefPrice']), 2) }}
+                                                    </td>
+                                                    <td>
+                                                        <p>Meal: {{ $room['MealType'] }}</p>
+                                                        {{-- <p>Cancellation Policy:</p> --}}
+                                                    </td>
+                                                    {{-- <td>
+										<select name="no_of_rooms" id="no_of_rooms_{{$loop->iteration}}">
+											<option value="1" selected>1</option>
+											<option value="2">2</option>
+											<option value="3">3</option>
+											<option value="4">4</option>
+											<option value="5">5</option>
+											<option value="6">6</option>
+										</select>
+									</td> --}}
+                                                    <td>
+                                                        <button type="button"
+                                                            data-selectid="no_of_rooms_{{ $loop->iteration }}"
+                                                            data-roomdetails="{{ json_encode($room) }}"
+                                                            data-ResultIndex="{{ $result['ResultIndex'] }}"
+                                                            data-RoomIndex="{{ $room['RoomIndex'] }}"
+                                                            data-sessionid="{{ session('sessionId') }}"
+                                                            data-price="{{ number_format(getAmountWithCommission($room['RoomRate']['PrefPrice']), 2) }}"
+                                                            data-hotelcode="{{ $hotel->HotelCode }}"
+                                                            data-hotelname="{{ $hotel->HotelName }}"
+                                                            data-city="{{ $hotel->CityName }}"
+                                                            class="add_top_30 btn_1 full-width checkAvailability">Book
+                                                            Now</button>
+                                                    </td>
+                                                </tr>
+
+                                                {{-- <div class="room_type  @if ($loop->first) first @elseif($loop->iteration %2 == 0) gray  @elseif($loop->first)last @else first @endif">
+								<div class="row">
+									<div class="col-md-4">
+										<img src="" class="img-fluid" alt="">
+									</div>
+									<div class="col-md-8">
+										<h4>{{$room['RoomCategory']}}</h4>
+										<p>{{$room['Meal']}}</p>
+                                        <p>Cancellation Policy: </p>
+										<ul class="hotel_facilities">
+											<li><img src="img/hotel_facilites_icon_2.svg" alt="">Single Bed</li>
+											<li><img src="img/hotel_facilites_icon_4.svg" alt="">Free Wifi</li>
+											<li><img src="img/hotel_facilites_icon_5.svg" alt="">Shower</li>
+											<li><img src="img/hotel_facilites_icon_7.svg" alt="">Air Condition</li>
+											<li><img src="img/hotel_facilites_icon_8.svg" alt="">Hairdryer</li>
+										</ul>
+										@php
+										$price = ceil( $room['Amount'] +  20%  ($room['Amount']));
+										@endphp
+                                        <div class="pull-right">
+                                            <h4 class="btn btn-default" ><b> AED  {{$price }} </b> </h4>
+                                        </div>                                        
+                                        
+										<button type="button" data-roomdetails="{{json_encode($room)}}" data-price="{{$price}}" data-hcode="{{$hotel->HCode}}" data-hotelname="{{$hotel->HName}}" data-city="{{$hotel->city}}" class="add_top_30 btn_1 full-width purchase">Book Now</button>
+                                        
+                                        
+									</div>
+								</div>
+								<!-- /row -->
+							</div> --}}
+                                                <!-- /rom_type -->
+                                            @empty
+                                                No Results found
+                                            @endforelse
+
+
+                                        </tbody>
+                                    </table>
+                                @else
+
+                                    No Results found
+                                @endif
+
+                                {{-- <h3>Location</h3>
+							<div id="map" class="map map_single add_bottom_30"></div> --}}
+                                <!-- End Map -->
+                            </section>
+                            <!-- /section -->
+
+                        </div>
+                        <!-- /col -->
+                    </div>
+                    <!-- /row -->
+                </div>
+                <!-- /container -->
+            </div>
+            <!-- /bg_color_1 -->
+        </main>
+        <!--/main-->
+
+        <!--Modal to show Cancellation Policies before booking -->
+
+        <div class="modal fade" style="padding-top: 100px" data-backdrop="static" data-keyboard="false"
+            id="hotelpolicies" tabindex="-1" role="dialog" aria-labelledby="hotelpoliciesModal" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Hotel Policies</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <button type="button" onclick="submitForm()" class="btn_1 pull-right agreebtn">Agee & Book </button>
+                        <div class="" id="policydetails">
+                            Loading...
+                        </div>
+
+
+                        <form method="POST" action="{{ route('submit_interest_on_room_tbo') }}" id="interestform">
+                            @csrf
+
+                            <input type="hidden" name="roomdetails" id="roomdetails">
+                            <input type="hidden" name="ResultIndex" id="ResultIndex">
+                            <input type="hidden" name="roomIndex" id="roomIndex">
+                            <input type="hidden" name="price" id="price">
+                            <input type="hidden" name="sessionId" id="sessionId">
+                            <input type="hidden" name="HotelCode" id="hotelcode">
+                            <input type="hidden" name="HotelName" id="hotelname">
+                            <input type="hidden" name="city" id="city">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" onclick="submitForm()" class="btn_1 agreebtn">Agee & Book </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--Modal to show Cancellation Policies before booking Ends -->
+
+        <!--Footer-->
+        @include('frontend.layouts.footer')
+        <!--Footer-->
+
+    </div>
+    <!-- page -->
+
+    <div id="toTop"></div>
+    <!-- Back to top button -->
+    <script src="{{ asset('js/common_scripts.js') }}"></script>
+    <script src="{{ mix('js/themescripts.js') }}"></script>
+
+    <script src="{{ asset('js/intlTelInput.js') }}"></script>
+    <script src="{{ asset('js/utils.js') }}"></script>
+    <script src="{{ asset('js/input_qty.js') }}"></script>
+
+
+    <!-- DATEPICKER  -->
+    <script>
+        $(function() {
+            $('input[name="dates"]').daterangepicker({
+                maxSpan: {
+                    "days": 29
+                },
+                autoUpdateInput: false,
+                parentEl: '.scroll-fix',
+                minDate: new Date(),
+                opens: 'left',
+                locale: {
+                    cancelLabel: 'Clear'
+                }
+            });
+            $('input[name="dates"]').on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('MM-DD-YY') + ' to ' + picker.endDate.format(
+                    'MM-DD-YY'));
+            });
+            $('input[name="dates"]').on('cancel.daterangepicker', function(ev, picker) {
+                $(this).val('');
+            });
+        });
+    </script>
+
+    <script>
+        function submitForm() {
+            $("#interestform").submit();
+        }
+    </script>
+
+    @if (Session::has('success'))
+        <script>
+            alert('Thank you. Our agent will contact you shortly');
+        </script>
+    @endif
+
+
+
+    <!-- phone -->
+    <script>
+        var phone = document.querySelector("#phone");
+        // here, the index maps to the error code returned from getValidationError - see readme
+        var errorMap = ["Invalid number", "Invalid country code", "Too short", "Too long", "Invalid number"];
+
+        var iti = window.intlTelInput(phone, {
+            utilsScript: "{{ asset('js/utils.js') }}",
+            initialCountry: "auto",
+            preferredCountries: ['AE', 'US', 'UK', 'SA', 'QA', 'OM', 'IN'],
+            setNumber: true,
+            formatOnDisplay: true,
+            nationalMode: true,
+            geoIpLookup: function(success, failure) {
+                $.get("https://ipinfo.io", function() {}, "jsonp").always(function(resp) {
+                    var countryCode = (resp && resp.country) ? resp.country : "";
+                    success(countryCode);
+                });
+            },
+        });
+
+        var reset = function() {
+            phone.classList.remove("error");
+        };
+
+        // on blur: validate
+        phone.addEventListener('keyup', function() {
+            reset();
+            if (phone.value.trim()) {
+                if (iti.isValidNumber()) {
+                    phone.classList.remove("is-invalid");
+                    phone.classList.add("is-valid");
+                    document.querySelector("#phone").value = iti.getNumber();
+                } else {
+                    phone.classList.remove("is-valid");
+                    phone.classList.add("is-invalid");
+                }
+            }
+        });
+
+        // on keyup / change flag: reset
+        phone.addEventListener('change', reset);
+        phone.addEventListener('keyup', reset);
+    </script>
+
+
+
+
+    <script>
+        $('.checkAvailability').on('click', function() {
+            $('.agreebtn').attr('disabled', 'disabled');
+            // $('.agreebtn').prop('disbled',true);
+            $('#policydetails').html("<p>Loading... </p>");
+
+            $('#hotelpolicies').modal('show');
+            var details = JSON.stringify($(this).data('roomdetails'));
+            var roomIndex = $(this).data('roomindex');
+            var ResultIndex = $(this).data('resultindex');
+            var SessionId = $(this).data('sessionid');
+            var price = $(this).data('price');
+            var hotelcode = $(this).data('hotelcode');
+            var hotelname = $(this).data('hotelname');
+            var city = $(this).data('city');
+
+            // assigning values
+            $('#roomdetails').val(details);
+            $('#sessionId').val(sessionId);
+            $('#ResultIndex').val(ResultIndex);
+            $('#roomIndex').val(roomIndex);
+            $('#price').val(price);
+            $('#hotelcode').val(hotelcode);
+            $('#hotelname').val(hotelname);
+            $('#city').val(city);
+
+
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('check_availability') }}",
+                data: {
+                    "_token": "{{ csrf_token() }}",
+                    'roomIndex': roomIndex,
+                    'ResultIndex': ResultIndex,
+                    'SessionId': SessionId
+                },
+                success: function(data) {
+                    $('.agreebtn').removeAttr('disabled');
+                    var text = "<p>";
+
+                    if (data.status.statusCode == '01') {
+                        text += `<a class="pt-4" data-toggle="collapse" href="#hotelnorms" role="button" aria-expanded="false">
+     <h5>View Hotel Details</h5>
+  </a><div class="collapse" id="hotelnorms">`;
+
+                        for (let i = 0; i < data.HotelNorms.length; i++) {
+                            text += data.HotelNorms[i] + "<br>";
+                        }
+                        text += "</div></p>";
+                        text += "<h5>Cancellation Policies</h5><p>";
+                        text += data.CancelPolicies.AutoCancellationText;
+                        text += data.CancelPolicies.DefaultPolicy;
+                        text += data.CancelPolicies.LastCancellationDeadline;
+                        text += "</p><p>";
+                        for (let i = 0; i < data.CancelPolicies.CancelPolicy.length; i++) {
+                            text += "From " + data.CancelPolicies.CancelPolicy[i].FromDate + " ";
+                            text += "To " + data.CancelPolicies.CancelPolicy[i].ToDate + " ";
+                            text += "Cancellation Charge of " + data.CancelPolicies.CancelPolicy[i]
+                                .CancellationCharge + " ";
+                            text += data.CancelPolicies.CancelPolicy[i].ChargeType + " in ";
+                            text += data.CancelPolicies.CancelPolicy[i].Currency + "<br>";
+                        }
+
+
+                    } else {
+                        text += "Something went wrong. Please search Again.</p>"
+                    }
+
+
+                    $('#policydetails').html(text);
+
+
+                    //    $('.loader_'+id).hide();		 
+                    // 	$("#row").css({height: 'auto'});
+                    //   $("#details_"+id).html(data.Policies[0].Remark);
+                }
+            });
+
+
+        });
+    </script>
+
+
+    <script>
+        $(function() {
+            $('[data-toggle="popover"]').popover({
+                trigger: 'focus'
+            });
+        })
+    </script>
+
+
+@endsection
