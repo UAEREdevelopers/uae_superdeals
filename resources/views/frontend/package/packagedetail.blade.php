@@ -488,6 +488,8 @@
     <script src="{{ asset('js/intlTelInput.js') }}"></script>
     <script src="{{ asset('js/utils.js') }}"></script>
 
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         $(".purchase").on('click', function() {
             $('#userdetaisModal').modal('show');
@@ -500,9 +502,14 @@
         }
     </script>
 
-    @if (Session::has('success'))
+    @if (Session::has('success_enquiry'))
+        
         <script>
-            alert('Thank you. Our agent will contact you shortly');
+            Swal.fire({
+                title: "Thank you!.Your Enquiry was Successful. Our agent will contact you shortly.",
+                icon: 'success',
+                showCloseButton: true
+            });
         </script>
     @endif
 

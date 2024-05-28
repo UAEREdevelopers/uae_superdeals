@@ -132,7 +132,7 @@ class HotelPackageController extends Controller
             $mail = dispatch((new SendPackageInterestInquiryReceivedEmails($package))->onQueue("high")); 
         }
          
-        Session::flash('success', 'Succesfully submitted');
+        Session::flash('success_enquiry', 'Successfully submitted Enquiry');
         return back();
     }
 
