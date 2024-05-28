@@ -90,6 +90,14 @@ class HotelPackageController extends Controller
         if($package->package->category_id == '13'){
 
             $payment = save_to_payments_table($package, 'pcr_package');
+            // If payment is SUCCESSFUL sent mail and Whatsapp Message Start
+            if($payment->status == "Success"){
+                
+               Session::flash('success_payment', 'Successfully Payment Done');
+               $this->launchMailWithWhatsapp($request, "PAYMENT_DONE");
+                    
+            }
+            // If payment is SUCCESSFUL sent mail and Whatsapp Message End
         }
         
 
@@ -97,21 +105,22 @@ class HotelPackageController extends Controller
         // if($package->package->category_id != '25'){
         if($package->package->category_id != '13'){
 
-              $payment = save_to_payments_table($package, 'package');
+            $payment = save_to_payments_table($package, 'package');
+            // If payment is SUCCESSFUL sent mail and Whatsapp Message Start
+            if($payment->status == "Success"){
+                
+               Session::flash('success_payment', 'Successfully Payment Done');
+               $this->launchMailWithWhatsapp($request, "PAYMENT_DONE");
+                    
+            }
+            // If payment is SUCCESSFUL sent mail and Whatsapp Message End
+
         }      
 
 
         // UPDATE PAYMENT TABLE ID IN EXPO2020_DEALS TABLE
         $package->update(['payment_table_id' => $payment['id']]);
         
-
-
-        if($payment->status == "Success"){
-
-            $this->launchMailWithWhatsapp($request, "PAYMENT_DONE");
-
-        }
-
 
 
         Session::flash('success', 'Succesfully created');
