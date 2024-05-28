@@ -176,7 +176,7 @@ class HotelPackageController extends Controller
             "fromAddress"=>"info@superdeals.ae",
             "toAddress"=>$requestData->email,
             "subject"=>$package_name." Superdeals Booking for ".$requestData->name,
-            "content"=>"Dear ".$requestData->name.",<h3 style='font-size:20px'>Thank You for Contacting Us!!!</h3><br> <b style='font-size:24px'>Your booking for ".$package_name." was successfully done.</b> <br><br> <b style='font-size:15px'>You shall recieve your ticket within 5-10 minutes.</b> "."<br> <b style='font-size:15px'> If you have not recieved any ticket from us within 30 minutes.</b> <br> <b style='font-size:15px'>Please call to this number - +971 522 43 6609 .</b>"." <h3>Package Details: </h3><br> ".$table,
+            "content"=>"Dear ".$requestData->name.",<h3 style='font-size:20px'>Thank You for Contacting Us!!!</h3><br> <b style='font-size:24px'>Your booking for ".$package_name." was successfully done.</b> <br><br> <b style='font-size:15px'>You shall recieve your ticket within 5-10 minutes.</b> "."<br> <b style='font-size:15px'> If you have not recieved any ticket from us within 30 minutes.</b> <br> <b style='font-size:15px'>Please call to this number - +971 522 43 6609 .</b>"." <h3>Package Details: </h3><br> ".$table."<br><img src='https://superdeals.ae/img/logo.png' alt='super-deals-logo' style='width:100px;height:100px;' /><br><a href='https://superdeals.ae/' target='_blank'>Visit Website</a>",
             "askReceipt" =>"yes",
         ];
         if($status == "PAYMENT_DONE"){
@@ -233,11 +233,21 @@ class HotelPackageController extends Controller
                 "message_data"=> "Super Deals booking ,<br> Your booking for ".$package_name." was successfully done.<br><h2>Package Details: </h2><br> ".$tableAdmin,
         );
         $result_message_admin = $this->mailPackageSent($dataAdmin);*/
+        $contentAdminZoho = '';
+        switch($status){
+            case 'PACKAGE_ENQUIRY':
+                $contentAdminZoho = "<b style='font-size:15px'> Super Deals enquiry Admin,</b> <br> <b style='font-size:24px'> Enquiry for ".$package_name." has came. </b><br><h2>Package Details: </h2><br> ".$tableAdmin."<br><img src='https://superdeals.ae/img/logo.png' alt='super-deals-logo' style='width:100px;height:100px;' /><br><a href='https://superdeals.ae/' target='_blank'>Visit Website</a>";
+            break;
+            case 'PAYMENT_DONE':
+                $contentAdminZoho = "<b style='font-size:15px'> Super Deals booking Admin,</b> <br> <b style='font-size:24px'> Booking for ".$package_name." was successfully done. </b> <br><h2>Package Details: </h2><br> ".$tableAdmin."<br><img src='https://superdeals.ae/img/logo.png' alt='super-deals-logo' style='width:100px;height:100px;' /><br><a href='https://superdeals.ae/' target='_blank'>Visit Website</a>";
+            break;
+        }
+        
         $dataZohoAdmin = [
             "fromAddress"=>"info@superdeals.ae",
             "toAddress"=>"uaeredevelopers@gmail.com",
             "subject"=>$package_name." Superdeals Booking for ".$requestData->name,
-            "content"=>"Super Deals booking ,<br> Your booking for ".$package_name." was successfully done.<br><h2>Package Details: </h2><br> ".$tableAdmin,
+            "content"=>$contentAdminZoho,
             "askReceipt" =>"yes",
         ];
         $result_message_admin_zoho = $this->mailZohoSet($dataZohoAdmin);
