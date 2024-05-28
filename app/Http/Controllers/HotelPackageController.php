@@ -157,7 +157,7 @@ class HotelPackageController extends Controller
         $table = '';
         $table = '<style> table, th, td { border: 1px solid black; } </style>';
         $table .= '<table style="border: 1px solid black;">';
-        $table .= '<tr><th style="border: 1px solid black;" >Package</th><td style="border: 1px solid black;">'.$package_name."-".$requestData->price.'</td></tr>';
+        $table .= '<tr><th style="border: 1px solid black;" >Package</th><td style="border: 1px solid black;">'.$package_name."-".$requestData->price.' AED Total</td></tr>';
         $table .= '<tr><th style="border: 1px solid black;" >Date</th><td style="border: 1px solid black;">'.$requestData->date.'</td></tr>';
         if($requestData->adults != null){
             $table .= '<tr><th style="border: 1px solid black;" >Adults</th><td style="border: 1px solid black;">'.$requestData->adults ?? null.'</td></tr>';
@@ -203,7 +203,7 @@ class HotelPackageController extends Controller
         $table = '<style> table, th, td { border: 1px solid black; } </style>';
         $tableAdmin .= '<table style="border: 1px solid black;">';
         $tableAdmin .= '<tr><th style="border: 1px solid black;">Name</th><td style="border: 1px solid black;">'.$requestData->name.'</td></tr>';
-        $tableAdmin .= '<tr><th style="border: 1px solid black;">Package</th><td style="border: 1px solid black;">'.$package_name."- &nbsp;&nbsp;".$requestData->price.' AED &nbsp;</td></tr>';
+        $tableAdmin .= '<tr><th style="border: 1px solid black;">Package</th><td style="border: 1px solid black;">'.$package_name."- &nbsp;&nbsp;".$requestData->price.' AED Total &nbsp;</td></tr>';
         $tableAdmin .= '<tr><th style="border: 1px solid black;">Email</th><td style="border: 1px solid black;">'.$requestData->email.'</td></tr>';
         $tableAdmin .= '<tr><th style="border: 1px solid black;">Contact</th><td style="border: 1px solid black;">'.$requestData->phone.'</td></tr>';
         $tableAdmin .= '<tr><th style="border: 1px solid black;">Date</th><td style="border: 1px solid black;">'.$requestData->date.'</td></tr>';
@@ -268,7 +268,7 @@ class HotelPackageController extends Controller
                 'name' =>    $requestData->name,
                 'phone' =>   $requestData->phone,
                 'email' =>   $requestData->email,
-                'price' => $requestData->price,
+                'price' => $requestData->price." AED Total",
                 'package_name' =>  $package_name,
                 'nationality'  =>  $requestData->nationality ?? null ,
                 'date' => $requestData->date ?? null,
