@@ -81,6 +81,7 @@ class HotelPackageController extends Controller
 
         if ($request->is_inquiry == 1 )
         {
+            $this->launchMailWithWhatsapp($request , "PACKAGE_ENQUIRY");
             return $this->submitInquiry($package);
         }
 
@@ -105,22 +106,348 @@ class HotelPackageController extends Controller
         
 
 
+        if($payment->status == "Success"){
 
-         // Sending email
-        $to = 'shuhaib.uaere@gmail.com';
-        $subject = 'SuperDeals test ';
-        $message3 = "Super Deals Test";
-        if(mail($to, $subject, $message3)){
-           \Log::info('Your mail3 has been sent successfully. '.date('m/d/Y h:i:s a', time()));
-        } else{
-            \Log::info('Unable to send email3. Please try again.'.date('m/d/Y h:i:s a', time()));
+            $this->launchMailWithWhatsapp($request, "PAYMENT_DONE");
+
         }
 
 
 
+        Session::flash('success', 'Succesfully created');
+        //return redirect()->route('payment_link', ['id'=> $payment['unique_id']]);
+    }
+
+    public function submitInquiry($package)
+    {      
+        //  SENDING PCR INQUIRY MAIL
+        // if($package->package->category_id =='25' ) {
+        if($package->package->category_id =='13' ) {
+            
+         $mail = dispatch((new SendPcrinquiryReceivedEmails($package))->onQueue("high"));     
+        }
+
+        else{
+            
+            $mail = dispatch((new SendPackageInterestInquiryReceivedEmails($package))->onQueue("high")); 
+        }
+         
+        Session::flash('success', 'Succesfully submitted');
+        return back();
+    }
+
+
+
+    // All Functions for mail Launch and Whatsapp Start
+
+    public function launchMailWithWhatsapp($requestData, $status){
+
+        $package_name = HotelPackage::where('id',$requestData->packageid)->firstorfail()->title;
+
+        //Message to Customer
+        $table = '';
+        $table = '<style> table, th, td { border: 1px solid black; } </style>';
+        $table .= '<table style="border: 1px solid black;">';
+        $table .= '<tr><th style="border: 1px solid black;" >Package</th><td style="border: 1px solid black;">'.$package_name."-".$requestData->price.'</td></tr>';
+        $table .= '<tr><th style="border: 1px solid black;" >Date</th><td style="border: 1px solid black;">'.$requestData->date.'</td></tr>';
+        if($requestData->adults != null){
+            $table .= '<tr><th style="border: 1px solid black;" >Adults</th><td style="border: 1px solid black;">'.$requestData->adults ?? null.'</td></tr>';
+        }
+        if($requestData->children_count_under_11 != null){
+            $table .= '<tr><th style="border: 1px solid black;" >children under 11 </th><td style="border: 1px solid black;">'.$requestData->children_count_under_11 ?? null.'</td></tr>';
+        }
+        if($requestData->children_count_under_5 != null){
+            $table .= '<tr><th style="border: 1px solid black;" >children under 5 </th><td style="border: 1px solid black;">'.$requestData->children_count_under_5 ?? null.'</td></tr>';
+        }
+        if($requestData->infants_count != null){
+            $table .= '<tr><th style="border: 1px solid black;" >Infants </th><td style="border: 1px solid black;">'.$requestData->infants_count ?? null.'</td></tr>';
+        }
+        if($requestData->special_requests != null){
+            $table .= '<tr><th style="border: 1px solid black;" >Special Request </th><td style="border: 1px solid black;">'.$requestData->special_requests.'</td></tr>';
+        }
+        $table .= '</table>';
+        /*$data = array(
+                "email_to"=> $requestData->email,
+                "message_subject"=> $package_name." Superdeals Booking for ".$requestData->name,
+                "message_data"=> "Dear ".$requestData->name.",<br> Your booking for ".$package_name." was successfully done.<br><h2>Package Details: </h2><br> ".$table."<br> If you have not recieved any reply from us within 15 minutes.<br> Please call to this number - +971 522 43 6609 .",
+        );
+        $result_message_customer = $this->mailPackageSent($data);*/
+        $dataZoho = [
+            "fromAddress"=>"info@superdeals.ae",
+            "toAddress"=>$requestData->email,
+            "subject"=>$package_name." Superdeals Booking for ".$requestData->name,
+            "content"=>"Dear ".$requestData->name.",<h3 style='font-size:20px'>Thank You for Contacting Us!!!</h3><br> <b style='font-size:24px'>Your booking for ".$package_name." was successfully done.</b> <br><br> <b style='font-size:15px'>You shall recieve your ticket within 5-10 minutes.</b> "."<br> <b style='font-size:15px'> If you have not recieved any ticket from us within 30 minutes.</b> <br> <b style='font-size:15px'>Please call to this number - +971 522 43 6609 .</b>"." <h3>Package Details: </h3><br> ".$table,
+            "askReceipt" =>"yes",
+        ];
+        if($status == "PAYMENT_DONE"){
+            $result_message_customer_zoho = $this->mailZohoSet($dataZoho);
+        }
+
+
+
+
+
+
+
+        //Message to Admin
+        $tableAdmin = '';
+        $table = '<style> table, th, td { border: 1px solid black; } </style>';
+        $tableAdmin .= '<table style="border: 1px solid black;">';
+        $tableAdmin .= '<tr><th style="border: 1px solid black;">Name</th><td style="border: 1px solid black;">'.$requestData->name.'</td></tr>';
+        $tableAdmin .= '<tr><th style="border: 1px solid black;">Package</th><td style="border: 1px solid black;">'.$package_name."- &nbsp;&nbsp;".$requestData->price.' AED &nbsp;</td></tr>';
+        $tableAdmin .= '<tr><th style="border: 1px solid black;">Email</th><td style="border: 1px solid black;">'.$requestData->email.'</td></tr>';
+        $tableAdmin .= '<tr><th style="border: 1px solid black;">Contact</th><td style="border: 1px solid black;">'.$requestData->phone.'</td></tr>';
+        $tableAdmin .= '<tr><th style="border: 1px solid black;">Date</th><td style="border: 1px solid black;">'.$requestData->date.'</td></tr>';
+
+        if($requestData->nationality != null){
+            $tableAdmin .= '<tr><th style="border: 1px solid black;">Nationality</th><td style="border: 1px solid black;">'.$requestData->nationality.'</td></tr>';
+        }
+        if($requestData->time != null){
+            $tableAdmin .= '<tr><th style="border: 1px solid black;">Time</th><td style="border: 1px solid black;">'.$requestData->time.'</td></tr>';
+        }
+        if($requestData->city != null){
+            $tableAdmin .= '<tr><th style="border: 1px solid black;">City</th><td style="border: 1px solid black;">'.$requestData->city.'</td></tr>';
+        }
+        if($requestData->area != null){
+            $tableAdmin .= '<tr><th style="border: 1px solid black;">Area</th><td style="border: 1px solid black;">'.$requestData->area.'</td></tr>';
+        }
+        if($requestData->adults != null){
+            $tableAdmin .= '<tr><th style="border: 1px solid black;">Adults</th><td style="border: 1px solid black;">'.$requestData->adults ?? null.'</td></tr>';
+        }
+        if($requestData->children_count_under_11 != null){
+            $tableAdmin .= '<tr><th style="border: 1px solid black;">children under 11 </th><td style="border: 1px solid black;">'.$requestData->children_count_under_11 ?? null.'</td></tr>';
+        }
+        if($requestData->children_count_under_5 != null){
+            $tableAdmin .= '<tr><th style="border: 1px solid black;">children under 5 </th><td style="border: 1px solid black;">'.$requestData->children_count_under_5 ?? null.'</td></tr>';
+        }
+        if($requestData->infants_count != null){
+            $tableAdmin .= '<tr><th style="border: 1px solid black;">Infants </th><td style="border: 1px solid black;">'.$requestData->infants_count ?? null.'</td></tr>';
+        }
+        if($requestData->special_requests != null){
+            $tableAdmin .= '<tr><th style="border: 1px solid black;">Special Request </th><td style="border: 1px solid black;">'.$requestData->special_requests.'</td></tr>';
+        }
+        $tableAdmin .= '</table>';
+        /*$dataAdmin = array(
+                "email_to"=> "uaeredevelopers@gmail.com",
+                "message_subject"=> $package_name." Superdeals Booking for ".$requestData->name,
+                "message_data"=> "Super Deals booking ,<br> Your booking for ".$package_name." was successfully done.<br><h2>Package Details: </h2><br> ".$tableAdmin,
+        );
+        $result_message_admin = $this->mailPackageSent($dataAdmin);*/
+        $dataZohoAdmin = [
+            "fromAddress"=>"info@superdeals.ae",
+            "toAddress"=>"uaeredevelopers@gmail.com",
+            "subject"=>$package_name." Superdeals Booking for ".$requestData->name,
+            "content"=>"Super Deals booking ,<br> Your booking for ".$package_name." was successfully done.<br><h2>Package Details: </h2><br> ".$tableAdmin,
+            "askReceipt" =>"yes",
+        ];
+        $result_message_admin_zoho = $this->mailZohoSet($dataZohoAdmin);
+
+
+
+        //Whatsapp Message to Admin
+        $dataWhatsapp = array(
+                'name' =>    $requestData->name,
+                'phone' =>   $requestData->phone,
+                'email' =>   $requestData->email,
+                'price' => $requestData->price,
+                'package_name' =>  $package_name,
+                'nationality'  =>  $requestData->nationality ?? null ,
+                'date' => $requestData->date ?? null,
+                'time' => $requestData->time ?? null ,
+                'city' => $requestData->city ?? null ,
+                'area' => $requestData->area ?? null ,
+                'no_of_adults'   =>  $requestData->adults ?? null ,
+                'no_of_children'  =>  $requestData->children_count_under_11 ?? null ,
+                'no_of_children_under_5'  =>  $requestData->children_count_under_5 ?? null ,
+                'no_of_infants'  =>  $requestData->infants_count ?? null ,
+                'special_requests' =>  $requestData->special_requests,
+        );
+        if($status == "PAYMENT_DONE"){
+            $this->sentMetaWhatapp($dataWhatsapp);
+        }
+
+    }
+
+    public function mailZohoSet($data){
+
+        
+        $mailResult = $this->mailZohoLaunch($data);
+        if(isset($mailResult["data"]["errorCode"]) && $mailResult["data"]["errorCode"] == "INVALID_OAUTHTOKEN"){
+
+            \Log::info("Get New Acess Token");
+            $newAccessTokenGenerated = $this->generateZohoAcessToken();
+            if($newAccessTokenGenerated != ''){
+                \Log::info("New Acess Token Generated");
+                $mailResult = $this->mailZohoLaunch($data);
+            }
+        }
+
+        return "Mail Launch Done";
+
+    }
+
+
+    public function mailZohoSet($data){
+
+        
+        $mailResult = $this->mailZohoLaunch($data);
+        if(isset($mailResult["data"]["errorCode"]) && $mailResult["data"]["errorCode"] == "INVALID_OAUTHTOKEN"){
+
+            \Log::info("Get New Access Token");
+            $newAccessTokenGenerated = $this->generateZohoAcessToken();
+            if($newAccessTokenGenerated != ''){
+                \Log::info("New Access Token Generated");
+                $mailResult = $this->mailZohoLaunch($data);
+            }
+        }
+
+        return "Mail Launch Done";
+
+    }
+
+    public function mailZohoLaunch($data){
+
+        $settings = Settings::first();
+        $zohoAccountID = '1359402000000008002';
+        $zohoAccessToken = $settings->zoho_access_token;
+        $zohoRefreshToken = '1000.813086803d38b8260b7854742c435b53.8b8f81585b5ed41e69e191dca9980ad4';
+        $url = 'https://mail.zoho.com/api/accounts/'.$zohoAccountID.'/messages';
+
+        \Log::info("HotelPackageController : mailZohoSent: zohoAccessToken:  ".print_r($zohoAccessToken,true));
+
+        $postdata = json_encode($data);
+        $ch = curl_init($url); 
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json','Authorization: Zoho-oauthtoken ' . $zohoAccessToken));
+        $result = curl_exec($ch);
+        curl_close($ch);
+
+        $result = json_decode($result,true);
+        
+        return $result;
+
+    }
+
+    public function generateZohoAcessToken(){
+
+        $settings = Settings::first();
+        $zohoAccountID = '1359402000000008002';
+        $zohoAccessToken = $settings->zoho_access_token;
+        $zohoRefreshToken = '1000.813086803d38b8260b7854742c435b53.8b8f81585b5ed41e69e191dca9980ad4';
+        $zohoClientId = '1000.KF8VAJJT5Y14FMVTP74ZY9O0ZFFHBC';
+        $zohoClientSecret = '3879d5b1e55e756ba65d7e79a30ea027b8a7b53dfe';
+        $zohoRedirectURI = 'https://superdeals.ae/zoho_response';
+        $zohoScope = 'ZohoMail.messages.CREATE,ZohoMail.messages.READ,ZohoMail.messages.UPDATE';
+        $zohoGrantType = 'refresh_token';
+
+
+        $urlGenerateRefresh = 'https://accounts.zoho.com/oauth/v2/token?refresh_token=1000.813086803d38b8260b7854742c435b53.8b8f81585b5ed41e69e191dca9980ad4&grant_type=refresh_token&client_id=1000.KF8VAJJT5Y14FMVTP74ZY9O0ZFFHBC&client_secret=3879d5b1e55e756ba65d7e79a30ea027b8a7b53dfe&redirect_uri=https://superdeals.ae/zoho_response&scope=ZohoMail.messages.CREATE,ZohoMail.messages.READ,ZohoMail.messages.UPDATE';
+
+        $dataToken = [
+            "refresh_token"=>$zohoRefreshToken,
+            "grant_type"=>$zohoGrantType,
+            "client_id"=>$zohoClientId,
+            "client_secret"=>$zohoClientSecret,
+            "redirect_uri"=>$zohoRedirectURI,
+            "scope"=>$zohoScope,
+        ];
+
+
+        $postdataToken = json_encode($dataToken);
+
+        $ch = curl_init($urlGenerateRefresh); 
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postdataToken);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
+        
+        $resultToken = curl_exec($ch);
+        curl_close($ch);
+
+        $resultToken = json_decode($resultToken,true);
+        $newAccessToken = $resultToken["access_token"];
+
+
+        //update access Token in settingsTable
+        $settings = Settings::first();
+        $settings->update(['zoho_access_token' => $newAccessToken]);
+
+
+        \Log::info("New Acess Token: ".print_r($newAccessToken,true));
+
+        return $newAccessToken;
+    }
+
+    public function mailPackageSent($data){
+
+        //\Log::info(print_r($data["email_to"],true));
+
+        $mail = new PHPMailer;
+        $mail->SMTPDebug = 0;                           
+        $mail->isSMTP();                              
+        $mail->Host = "smtp.zoho.com";
+        $mail->SMTPAuth = true;                      
+        $mail->Username = "info@superdeals.ae";             
+        $mail->Password = "r?w3tsrS1";                       
+        $mail->SMTPSecure = "ssl";                      
+        $mail->Port = 465;                    
+        $mail->From = "info@superdeals.ae";
+        $mail->FromName = "SuperDeals";
+
+        $to = $data["email_to"];
+        $mail->addAddress($to);
+        $mail->isHTML(true);
+        $mail->Subject = $data["message_subject"];
+        $mail->Body = "<div>".$data["message_data"]."</div>";
+        $mail->AltBody = "This is the plain text version of the email content";
+
+        if(!$mail->send()){
+            return "Mailer Error: " . $mail->ErrorInfo;
+        }else{
+            return "Message has been sent successfully";
+        }
+
+
+        
+    }
+
+    public function sentMetaWhatapp($data){
+
+
+
+        $text = "Superdeals Booking " . "\n";
+        $text .= "Name: " . $data["name"] . "\n";
+        $text .= "Phone: " . $data["phone"] . "\n";
+        $text .= "Email: " . $data["email"] . "\n";
+        $text .= "Package: ".$data["package_name"]."-".$data["price"] . "\n";
+        $text .= "Date: " . $data["date"] . "\n";
+
+        if($data["nationality"] != null){
+            $text .= "Nationality: " . $data["nationality"] . "\n";
+        }
+        if($data["no_of_adults"] != null){
+            $text .= "adults: " . $data["no_of_adults"] . "\n";
+        }
+        if($data["no_of_children"] != null){
+            $text .= "children under 11: " . $data["no_of_children"] . "\n";
+        }
+        if($data["no_of_children_under_5"] != null){
+            $text .= "children under 5: " . $data["no_of_children_under_5"] . "\n";
+        }
+        if($data["no_of_infants"] != null){
+            $text .= "Infants: " . $data["no_of_infants"] . "\n";
+        }
+        if($data["special_requests"] != null){
+            $text .= "Special Requests: " . $data["special_requests"] . "\n";
+        }
+
+        
+       
+
         $VERSION = "v18.0";
         $PHONE_NUMBER_ID = "256720837525582";
-        $text = "Superdeals";
+        
         $metaBearerToken = 'EAATCgHhL5dIBOzkZAUOlTCRZCChZCaEcmDAz0sso2CZB6zbHtaAldpRibLbMaSzBm0Q1ngRxsz4GV2ZCcKaNBWD78ZCj8QZADg6tTdZCTyU0DznSOZAZBXxNXLWbYYFfjhs0Bl4fZBs8U71o47VgQupxKJn1a804maDaBrQmOXQVK61t6weZAEoMymZAavFL0pZB1hKHgX';
 
         $url = 'https://graph.facebook.com/'.$VERSION.'/'.$PHONE_NUMBER_ID.'/messages';
@@ -165,31 +492,11 @@ class HotelPackageController extends Controller
         curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
         $respWhatsapp = curl_exec($curl);
         curl_close($curl);
-        \Log::info("Superdeals whatsapp met dev13".print_r($respWhatsapp,true));
-
-
-
-        Session::flash('success', 'Succesfully created');
-        //return redirect()->route('payment_link', ['id'=> $payment['unique_id']]);
+        //\Log::info("Superdeals whatsapp met dev13".print_r($respWhatsapp,true));
     }
 
-    public function submitInquiry($package)
-    {      
-        //  SENDING PCR INQUIRY MAIL
-        // if($package->package->category_id =='25' ) {
-        if($package->package->category_id =='13' ) {
-            
-         $mail = dispatch((new SendPcrinquiryReceivedEmails($package))->onQueue("high"));     
-        }
+    // All Functions for mail Launch and Whatsapp End
 
-        else{
-            
-            $mail = dispatch((new SendPackageInterestInquiryReceivedEmails($package))->onQueue("high")); 
-        }
-         
-        Session::flash('success', 'Succesfully submitted');
-        return back();
-    }
 
 
     // BACKEND ROUTES START
